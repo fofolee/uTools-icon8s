@@ -1,0 +1,17 @@
+{
+    "version": "1.0.1",
+    "pluginName": "icons8搜索",
+    "description": "搜索icons8的图标，并可以下载png、svg格式，或转成ico、icns格式",
+    "author": "云之轩",
+    "homepage": "https://yuanliao.info/d/1505",
+    "preload": "preload.js",
+    "logo": "logo.png",
+    "features": [
+        {
+            "platform": ["darwin", "linux", "win32"],
+            "code": "icons8",
+            "explain": "搜索icons8图标并下载",
+            "cmds": ["icons8"]
+        }
+    ]
+}
