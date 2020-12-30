@@ -131,11 +131,11 @@ saveImg = (options, content, coding) => {
 showPreferences = async () => {
     var language, platform, amount;
     if (window.preferences == undefined) {
-        language = "en-US";
+        // language = "en-US";
         platform = "color";
         amount = "300";
     } else {
-        language = window.preferences.language;
+        // language = window.preferences.language;
         platform = window.preferences.platform;
         size = window.preferences.size;
         amount = window.preferences.amount;
@@ -145,22 +145,22 @@ showPreferences = async () => {
     await require('sweetalert2').fire({
         title: '设置',
         onBeforeOpen: () => {
-            document.getElementById('language').value = language;
+            // document.getElementById('language').value = language;
             document.getElementById('platform').value = platform;
         },
         backdrop: '#bbb',
         html:
-        `搜索语言 <select id="language"class="swal2-select" style="width: 80%; height: 3rem; text-align: center; text-align-last: center">
+        `<!--搜索语言 <select id="language"class="swal2-select" style="width: 80%; height: 3rem; text-align: center; text-align-last: center">
             <option value="en-US">英文</>
             <option value="zh-CN">中文</>
-        </select>
+        </select>-->
         图标风格 <select id="platform" class="swal2-select" style="width: 80%; height: 3rem; text-align: center; text-align-last: center"> <option value="all">all</> <option value="color">color</> <option value="win8">win8</> <option value="win10">win10</> <option value="ios7">ios7</> <option value="android">android</> <option value="androidL">androidL</> <option value="office">office</> <option value="ultraviolet">ultraviolet</> <option value="nolan">nolan</> <option value="p1em">p1em</> <option value="dotty">dotty</> <option value="dusk">dusk</> <option value="Dusk_Wired">Dusk_Wired</> <option value="cotton">cotton</> <option value="ios11">ios11</> <option value="clouds">clouds</> <option value="bubbles">bubbles</> <option value="plasticine">plasticine</> <option value="carbon_copy">carbon_copy</> <option value="doodle">doodle</> <option value="fineline">fineline</> <option value="isometric">isometric</> <option value="flat_round">flat_round</> <option value="m_outlined">m_outlined</> <option value="m_rounded">m_rounded</> <option value="m_two_tone">m_two_tone</> <option value="m_sharp">m_sharp</> </select>
         搜索数量 <input value="${amount}" placeholder="搜索图标的最大数量" id="amount" class="swal2-input" style="width: 80%; height: 3rem; text-align: center">`,
         focusConfirm: false,
         confirmButtonText: '保存',
         preConfirm: () => {
             var data = {
-                language: document.getElementById('language').value,
+                // language: document.getElementById('language').value,
                 platform: document.getElementById('platform').value,
                 amount: document.getElementById('amount').value
             }
@@ -177,7 +177,8 @@ showPreferences = async () => {
 showMoreFeatures = async () => {
     utools.setExpendHeight(480)
     utools.subInputBlur();
-    await require('sweetalert2').fire({
+    var swal = require('sweetalert2')
+    await swal.fire({
         backdrop: '#bbb',
         html:
         `选择图标尺寸 <select id="size" class="swal2-select" style="width: 80%; height: 3rem; margin: 5px; text-align: center; text-align-last: center"> <option value="1x">1x</> <option value="2x">2x</> <option value="3x">3x</> <option value="4x">4x</> <option value="5x">5x</> <option value="6x">6x</> <option value="7x">7x</> <option value="8x">8x</> <option value="9x">9x</> <option value="10x">10x</> <option value="11x">11x</> <option value="12x">12x</> </select>
@@ -190,21 +191,26 @@ showMoreFeatures = async () => {
         onBeforeOpen: () => {
             document.getElementById('png').onclick = () => {
                 var size = document.getElementById('size').value
+                swal.clickConfirm()
                 savePng(size);
             }
             document.getElementById('clip').onclick = () => {
                 var size = document.getElementById('size').value
+                swal.clickConfirm()
                 copyPng(size);
             }
             document.getElementById('svg').onclick = () => {
+                swal.clickConfirm()
                 saveSvg();
             }
             document.getElementById('ico').onclick = () => {
                 var size = document.getElementById('size').value
+                swal.clickConfirm()
                 saveIco(size);
             }
             document.getElementById('icns').onclick = () => {
                 var size = document.getElementById('size').value
+                swal.clickConfirm()
                 saveIcns(size);
             }
         },
@@ -218,8 +224,9 @@ showMoreFeatures = async () => {
 search = async searchWord => {
     var amount = window.preferences.amount;
     var platform = window.preferences.platform;
-    var language = window.preferences.language;
-    var url = `https://search.icons8.com/api/iconsets/v5/search?term=${encodeURIComponent(searchWord)}&amount=${amount}&offset=0&platform=${platform}&language=${language}`;
+    var language = /[\u4e00-\u9fa5]/.test(searchWord) ? 'zh' : 'en';
+    var token = 'JpOyWT5TW8yYThBIk1fCbsNDd3ISSChSD5vPgCON'
+    var url = `https://search.icons8.com/api/iconsets/v5/search?term=${encodeURIComponent(searchWord)}&amount=${amount}&offset=0&platform=${platform}&language=${language}&token=${token}`;
     var data = await get(url);
     var icons = JSON.parse(data).icons
     for (var i of icons) {
@@ -246,7 +253,7 @@ window.exports = {
             search: (action, searchWord, callbackSetList) => {
                 Mousetrap.bind('enter', async () => {
                     var icons = await search(searchWord);
-                    callbackSetList(icons)                
+                    callbackSetList(icons)
                     return false
                 });
             },

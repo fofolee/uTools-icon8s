@@ -1,5 +1,5 @@
 {
-    "version": "1.0.1",
+    "version": "1.0.3",
     "pluginName": "icons8搜索",
     "description": "搜索icons8的图标，并可以下载png、svg格式，或转成ico、icns格式",
     "author": "云之轩",
