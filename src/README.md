@@ -4,6 +4,8 @@
 
 搜索下载icons8的图标。通过列表模式制作。
 
+图标源自：[https://icons8.com/](https://icons8.com/)
+
 ## 功能
 
 - 搜索icons8的图标，支持中文搜索，分风格搜索

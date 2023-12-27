@@ -3,6 +3,9 @@ const https = require("https");
 const Mousetrap = require('mousetrap');
 const Nanobar = require('nanobar')
 const png2icons = require("png2icons");
+const folderico = require('./folderico')
+const os = require('os')
+const path = require('path')
 
 // 更新数据库
 pushData = (databases, data) => {
@@ -119,6 +122,26 @@ saveIcns = async size => {
     saveImg(options, icns, 'binary');
 }
 
+setFolderIcon = async (size) => {
+    var icon = await getImgBuffer(size);
+    var folderPath = utools.showOpenDialog({
+        properties: ['openDirectory'],
+        title: '选择文件夹'
+    })
+    if (!folderPath) return
+    if (process.platform == 'darwin') {
+        var icns = png2icons.createICNS(icon, png2icons.BILINEAR, 0);
+        var iconPath = path.join(os.tmpdir(), 'icon.icns');
+        fs.writeFileSync(iconPath, icns, 'binary')
+        folderico.changeMacFolderIcon(folderPath, iconPath)
+    } else {
+        var ico = png2icons.createICO(icon, png2icons.BICUBIC, 0, false);
+        var iconPath = path.join(os.tmpdir(), 'icon.ico');
+        fs.writeFileSync(iconPath, ico, 'binary')
+        folderico.changeWinowsFolderIcon(folderPath, iconPath)
+    }
+}
+
 // 以指定编码保存图片
 saveImg = (options, content, coding) => {
     var filename = utools.showSaveDialog(options)
@@ -134,11 +157,13 @@ showPreferences = async () => {
         // language = "en-US";
         platform = "color";
         amount = "300";
+        token = ""
     } else {
         // language = window.preferences.language;
         platform = window.preferences.platform;
         size = window.preferences.size;
         amount = window.preferences.amount;
+        token = window.preferences.token || "";
     }
     utools.setExpendHeight(480)
     utools.subInputBlur();
@@ -155,18 +180,21 @@ showPreferences = async () => {
             <option value="zh-CN">中文</>
         </select>-->
         图标风格 <select id="platform" class="swal2-select" style="width: 80%; height: 3rem; text-align: center; text-align-last: center"> <option value="all">all</> <option value="color">color</> <option value="win8">win8</> <option value="win10">win10</> <option value="ios7">ios7</> <option value="android">android</> <option value="androidL">androidL</> <option value="office">office</> <option value="ultraviolet">ultraviolet</> <option value="nolan">nolan</> <option value="p1em">p1em</> <option value="dotty">dotty</> <option value="dusk">dusk</> <option value="Dusk_Wired">Dusk_Wired</> <option value="cotton">cotton</> <option value="ios11">ios11</> <option value="clouds">clouds</> <option value="bubbles">bubbles</> <option value="plasticine">plasticine</> <option value="carbon_copy">carbon_copy</> <option value="doodle">doodle</> <option value="fineline">fineline</> <option value="isometric">isometric</> <option value="flat_round">flat_round</> <option value="m_outlined">m_outlined</> <option value="m_rounded">m_rounded</> <option value="m_two_tone">m_two_tone</> <option value="m_sharp">m_sharp</> </select>
-        搜索数量 <input value="${amount}" placeholder="搜索图标的最大数量" id="amount" class="swal2-input" style="width: 80%; height: 3rem; text-align: center">`,
+        搜索数量 <input value="${amount}" placeholder="搜索图标的最大数量" id="amount" class="swal2-input" style="width: 80%; height: 3rem; text-align: center">
+        APIKEY <input value="${token}" placeholder="APIKEY" id="token" class="swal2-input" style="width: 80%; height: 3rem; text-align: center">`,
         focusConfirm: false,
         confirmButtonText: '保存',
         preConfirm: () => {
             var data = {
                 // language: document.getElementById('language').value,
                 platform: document.getElementById('platform').value,
-                amount: document.getElementById('amount').value
+                amount: document.getElementById('amount').value,
+                token: document.getElementById('token').value
             }
             window.preferences = data;
             pushData("icons8Preferences", data);
-        }
+        },
+        footer: '图标搜索来自<a href="#" onclick=utools.shellOpenExternal("https://icons8.com/")>icon8s</a>, 如搜索失效,<a href="#" onclick=utools.shellOpenExternal("https://developers.icons8.com/")>此处</a>申请 APIKEY'
     })
     var listnum = document.querySelectorAll('.list-item').length;
     utools.setExpendHeight(listnum > 10 ? 480 : 48 * listnum);
@@ -186,7 +214,8 @@ showMoreFeatures = async () => {
         <button id="svg" class="swal2-confirm swal2-styled" style="width: 80%; height: 3rem; margin: 5px">下载 SVG</button>
         <button id="ico" class="swal2-confirm swal2-styled" style="width: 80%; height: 3rem; margin: 5px">转为 ICO</button>
         <button id="icns" class="swal2-confirm swal2-styled" style="width: 80%; height: 3rem; margin: 5px">转为 ICNS</button>
-        <button id="clip" class="swal2-confirm swal2-styled"  style="width: 80%; height: 3rem; margin: 5px">复制至剪贴板</button>`,
+        <button id="clip" class="swal2-confirm swal2-styled"  style="width: 80%; height: 3rem; margin: 5px">复制至剪贴板</button>
+        <button button id = "folder" class= "swal2-confirm swal2-styled"  style = "width: 80%; height: 3rem; margin: 5px" > 设为文件夹图标</button >`,
         showConfirmButton: false,
         onBeforeOpen: () => {
             document.getElementById('png').onclick = () => {
@@ -213,6 +242,11 @@ showMoreFeatures = async () => {
                 swal.clickConfirm()
                 saveIcns(size);
             }
+            document.getElementById('folder').onclick = () => {
+                var size = document.getElementById('size').value
+                swal.clickConfirm()
+                setFolderIcon(size);
+            }
         },
     })
     var listnum = document.querySelectorAll('.list-item').length;
@@ -224,9 +258,10 @@ showMoreFeatures = async () => {
 search = async searchWord => {
     var amount = window.preferences.amount;
     var platform = window.preferences.platform;
+    var token = window.preferences.token;
     var language = /[\u4e00-\u9fa5]/.test(searchWord) ? 'zh' : 'en';
-    var token = 'JpOyWT5TW8yYThBIk1fCbsNDd3ISSChSD5vPgCON'
-    var url = `https://search.icons8.com/api/iconsets/v5/search?term=${encodeURIComponent(searchWord)}&amount=${amount}&offset=0&platform=${platform}&language=${language}&token=${token}`;
+    var url = `https://search.icons8.com/api/iconsets/v5/search?term=${encodeURIComponent(searchWord)}&amount=${amount}&offset=0&platform=${platform}&language=${language}`;
+    if (token) url += `&token=${token}`
     var data = await get(url);
     var icons = JSON.parse(data).icons
     for (var i of icons) {

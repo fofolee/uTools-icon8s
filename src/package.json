@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "mousetrap": "^1.6.5",
+    "nanobar": "^0.4.2",
+    "png2icons": "^2.0.1",
+    "sweetalert2": "^9.10.12"
+  }
+}
