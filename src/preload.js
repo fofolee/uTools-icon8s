@@ -7,8 +7,10 @@ const folderico = require('./folderico')
 const os = require('os')
 const path = require('path')
 
+const icons8 = {}
+
 // 更新数据库
-pushData = (databases, data) => {
+const pushData = (databases, data) => {
     var db = utools.db.get(databases);
     if (db) {
         utools.db.put({ _id: databases, data: data, _rev: db._rev });
@@ -18,7 +20,7 @@ pushData = (databases, data) => {
 }
 
 // get请求
-get = url =>
+const get = url =>
     new Promise((resolve, reject) => {
         var listnum = document.querySelectorAll('.list-item').length;
         if (!listnum) utools.setExpendHeight(1);
@@ -59,21 +61,21 @@ get = url =>
     })
 
 // 获取指定size图片，返回buffer
-getImgBuffer = async size => {
+const getImgBuffer = async size => {
     var src = document.querySelector('.list-item-selected img').src;
     var icon = await get(src.replace('/2x/', `/${size}/`));
     return icon
 }
 
 // 复制图片到剪贴板
-copyPng = async size => {
+const copyPng = async size => {
     var icon = await getImgBuffer(size);
     utools.copyImage(icon);
     utools.showNotification('已复制');
 }
 
 // 保存png
-savePng = async size => {
+const savePng = async size => {
     var icon = await getImgBuffer(size);
     var name = document.querySelector('.list-item-selected .list-item-title').innerText
     options = {
@@ -84,7 +86,7 @@ savePng = async size => {
 }
 
 // 保存svg
-saveSvg = async () => {
+const saveSvg = async () => {
     var id = document.querySelector('.list-item-selected .list-item-description').innerText.split(',')[0].split(':')[1].trim();
     var url = `https://api-icons.icons8.com/siteApi/icons/icon?id=${id}`;
     var data = await get(url);
@@ -99,7 +101,7 @@ saveSvg = async () => {
 }
 
 // 保存ico
-saveIco = async size => {
+const saveIco = async size => {
     var icon = await getImgBuffer(size);
     var ico = png2icons.createICO(icon, png2icons.BICUBIC, 0, false);
     var name = document.querySelector('.list-item-selected .list-item-title').innerText
@@ -111,7 +113,7 @@ saveIco = async size => {
 }
 
 // 保存icns
-saveIcns = async size => {
+const saveIcns = async size => {
     var icon = await getImgBuffer(size);
     var icns = png2icons.createICNS(icon, png2icons.BILINEAR, 0);
     var name = document.querySelector('.list-item-selected .list-item-title').innerText
@@ -122,7 +124,7 @@ saveIcns = async size => {
     saveImg(options, icns, 'binary');
 }
 
-setFolderIcon = async (size) => {
+const setFolderIcon = async (size) => {
     var icon = await getImgBuffer(size);
     var folderPath = utools.showOpenDialog({
         properties: ['openDirectory'],
@@ -143,7 +145,7 @@ setFolderIcon = async (size) => {
 }
 
 // 以指定编码保存图片
-saveImg = (options, content, coding) => {
+const saveImg = (options, content, coding) => {
     var filename = utools.showSaveDialog(options)
     filename && fs.writeFile(filename, content, coding, err => {
         err && console.log(err)
@@ -151,19 +153,19 @@ saveImg = (options, content, coding) => {
 }
 
 // 偏好设置
-showPreferences = async () => {
+const showPreferences = async () => {
     var language, platform, amount;
-    if (window.preferences == undefined) {
+    if (icons8.preferences == undefined) {
         // language = "en-US";
         platform = "color";
         amount = "300";
         token = ""
     } else {
-        // language = window.preferences.language;
-        platform = window.preferences.platform;
-        size = window.preferences.size;
-        amount = window.preferences.amount;
-        token = window.preferences.token || "";
+        // language = icons8.preferences.language;
+        platform = icons8.preferences.platform;
+        size = icons8.preferences.size;
+        amount = icons8.preferences.amount;
+        token = icons8.preferences.token || "";
     }
     utools.setExpendHeight(480)
     utools.subInputBlur();
@@ -191,7 +193,7 @@ showPreferences = async () => {
                 amount: document.getElementById('amount').value,
                 token: document.getElementById('token').value
             }
-            window.preferences = data;
+            icons8.preferences = data;
             pushData("icons8Preferences", data);
         },
         footer: '图标搜索来自<a href="#" onclick=utools.shellOpenExternal("https://icons8.com/")>icon8s</a>, 如搜索失效,<a href="#" onclick=utools.shellOpenExternal("https://developers.icons8.com/")>此处</a>申请 APIKEY'
@@ -202,10 +204,10 @@ showPreferences = async () => {
 }
 
 // 更多
-showMoreFeatures = async () => {
+const showMoreFeatures = async () => {
     utools.setExpendHeight(480)
     utools.subInputBlur();
-    var swal = require('sweetalert2')
+    const swal = require('sweetalert2')
     await swal.fire({
         backdrop: '#bbb',
         html:
@@ -255,10 +257,10 @@ showMoreFeatures = async () => {
 }
 
 // 搜索
-search = async searchWord => {
-    var amount = window.preferences.amount;
-    var platform = window.preferences.platform;
-    var token = window.preferences.token;
+const search = async searchWord => {
+    var amount = icons8.preferences.amount;
+    var platform = icons8.preferences.platform;
+    var token = icons8.preferences.token;
     var language = /[\u4e00-\u9fa5]/.test(searchWord) ? 'zh' : 'en';
     var url = `https://search.icons8.com/api/iconsets/v5/search?term=${encodeURIComponent(searchWord)}&amount=${amount}&offset=0&platform=${platform}&language=${language}`;
     if (token) url += `&token=${token}`
@@ -279,7 +281,7 @@ window.exports = {
         args: {
             enter: async (action, callbackSetList) => {
                 try {
-                    window.preferences = utools.db.get("icons8Preferences").data;
+                    icons8.preferences = utools.db.get("icons8Preferences").data;
                 } catch (error) {
                     showPreferences()
                 }
@@ -289,6 +291,7 @@ window.exports = {
                 Mousetrap.bind('enter', async () => {
                     var icons = await search(searchWord);
                     callbackSetList(icons)
+                    utools.setSubInputValue('')
                     return false
                 });
             },
